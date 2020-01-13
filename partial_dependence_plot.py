@@ -18,14 +18,14 @@ def plot_pdp(model: object,
         feature_name: (str) name of feature
         feature_type: (str) type of feature - either "discrete" or "continuous"
     Returns:
-        # TODO (numpy.ndarray) vector of increased errors of samples_numb length (0 - 0%, 1=100%).
+        (pandas.DataFrame) dataframe with one column of PDP values.
     """
 
     if X.shape[0] > 1000:
         sample_indexes = np.random.randint(X.shape[0], size=1000)
         X = X[sample_indexes, :]
 
-    sampled_values = __sample_space(feature_vals=X[:, feature_number],
+    sampled_values = __sample_space(x=X[:, feature_number],
                                     feature_type=feature_type,
                                     sample_resolution=100)
     sample_resolution = sampled_values.shape[0]
@@ -70,14 +70,14 @@ def plot_ice(model: object,
         feature_name: (str) name of feature
         feature_type: (str) type of feature - either "discrete" or "continuous"
     Returns:
-        # TODO (numpy.ndarray) vector of increased errors of samples_numb length (0 - 0%, 1=100%).
+        (pandas.DataFrame) dataframe with ICE values.
     """
 
     if X.shape[0] > 1000:
         sample_indexes = np.random.randint(X.shape[0], size=1000)
         X = X[sample_indexes, :]
 
-    sampled_values = __sample_space(feature_vals=X[:, feature_number],
+    sampled_values = __sample_space(x=X[:, feature_number],
                                     feature_type=feature_type,
                                     sample_resolution=100)
     sample_resolution = sampled_values.shape[0]

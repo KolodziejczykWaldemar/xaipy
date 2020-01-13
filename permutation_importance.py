@@ -1,6 +1,8 @@
+import sys
+
 import numpy as np
 import pandas as pd
-import progressbar2 as pb
+import progressbar as pb
 
 from typing import Callable
 
@@ -74,7 +76,7 @@ def permutation_importance(model: object,
 
     importances_df = pd.DataFrame()
     for feature_number in range(X.shape[1]):
-        # print('Processing feature {}'.format(feature_number))
+
         feature_importance = permutation_importance_one_feature(model=model,
                                                                 X=X,
                                                                 y=y,
@@ -83,5 +85,4 @@ def permutation_importance(model: object,
                                                                 samples_numb=samples_numb)
 
         importances_df[feature_names[feature_number]] = feature_importance
-
     return importances_df

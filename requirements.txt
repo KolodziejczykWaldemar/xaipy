@@ -1,3 +1,4 @@
 numpy==1.17.4
 pandas==0.23.0
+progressbar==2.5
 progressbar2==3.47.0
