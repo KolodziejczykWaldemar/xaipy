@@ -3,6 +3,8 @@ import itertools
 import numpy as np
 import pandas as pd
 
+from model_utils import get_prediction
+
 
 def plot_pdp(model: object,
              X: np.ndarray,
@@ -10,8 +12,8 @@ def plot_pdp(model: object,
              feature_name: str,
              feature_type: str = 'continuous',
              resolution: int = 100,
-             samples_number: int = -1
-             ) -> pd.DataFrame:
+             samples_number: int = -1,
+             mode: str = 'reg') -> pd.DataFrame:
     """
     Function outputs Partial Dependence Plot for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/pdp.html
@@ -24,6 +26,7 @@ def plot_pdp(model: object,
         feature_type: (str) type of feature - either "discrete" or "continuous"
         resolution: (int) resolution of ICE plot, default 100
         samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
     Returns:
         (pandas.DataFrame) dataframe with one column of PDP values.
     """
@@ -53,7 +56,7 @@ def plot_pdp(model: object,
                                       concatenated_instances,
                                       axis=0)
 
-    y_pred = model.predict(stacked_instances).ravel()
+    y_pred = get_prediction(model, stacked_instances, mode, predict_proba=True)
     feature_results = pd.DataFrame({feature_name: stacked_instances[:, feature_number],
                                     'output': y_pred})
     mean_outputs = feature_results.groupby([feature_name]).mean()
@@ -67,7 +70,8 @@ def plot_pdp_2d(model: object,
                 feature_names: list,
                 feature_types: list = 'continuous',
                 resolution: int = 100,
-                samples_number: int = -1) -> pd.DataFrame:
+                samples_number: int = -1,
+                mode: str = 'reg') -> pd.DataFrame:
     """
     Function outputs Partial Dependence Plot for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/pdp.html
@@ -80,6 +84,7 @@ def plot_pdp_2d(model: object,
         feature_types: (str) list of feature types - either "discrete" or "continuous"
         resolution: (int) resolution of ICE plot, default 100
         samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
     Returns:
         (pandas.DataFrame) dataframe with indexes as first feature, columns as second feature and mean PDP values.
     """
@@ -106,7 +111,7 @@ def plot_pdp_2d(model: object,
                                       copied_instances,
                                       axis=0)
 
-    y_pred = model.predict(stacked_instances).ravel()
+    y_pred = get_prediction(model, stacked_instances, mode, predict_proba=True)
     feature_results = pd.DataFrame({feature_names[0]: stacked_instances[:, feature_numbers[0]],
                                     feature_names[1]: stacked_instances[:, feature_numbers[1]],
                                     'output': y_pred})
@@ -126,7 +131,8 @@ def plot_ice(model: object,
              feature_name: str,
              feature_type: str = 'continuous',
              resolution: int = 100,
-             samples_number: int = -1) -> pd.DataFrame:
+             samples_number: int = -1,
+             mode: str = 'reg') -> pd.DataFrame:
     """
     Function outputs Individual Conditional Expectation for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/ice.html
@@ -139,6 +145,7 @@ def plot_ice(model: object,
         feature_type: (str) type of feature - either "discrete" or "continuous"
         resolution: (int) resolution of ICE plot, default 100
         samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
     Returns:
         (pandas.DataFrame) dataframe with ICE values.
     """
@@ -172,7 +179,7 @@ def plot_ice(model: object,
 
         row_indicator += ((np.ones(sample_resolution) * i).ravel().tolist())
 
-    y_pred = model.predict(stacked_instances).ravel()
+    y_pred = get_prediction(model, stacked_instances, mode, predict_proba=True)
     feature_results = pd.DataFrame({feature_name: stacked_instances[:, feature_number],
                                     'output': y_pred,
                                     'sample_id': row_indicator})

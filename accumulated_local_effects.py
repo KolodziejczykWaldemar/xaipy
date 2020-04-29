@@ -1,13 +1,16 @@
 import numpy as np
 import pandas as pd
 
+from model_utils import get_prediction
+
 
 def ale_plot(model: object,
              X: np.ndarray,
              feature_number: int,
-             resolution: int=100,
-             delta_split: int=None,
-             feature_type: str='continuous') -> pd.DataFrame:
+             resolution: int = 100,
+             delta_split: int = None,
+             feature_type: str = 'continuous',
+             mode: str = 'reg') -> pd.DataFrame:
     """
         Function outputs Accumulated Local Effects Plot for given feature number. It handles continuous and ordered
         categorical variables. Unordered categorical variables not supported.
@@ -21,6 +24,7 @@ def ale_plot(model: object,
             delta_split: (int) default None, number of examples in one interval, if given, resolution is computed based
                         on delta_split
             feature_type: (str) type of feature - either "discrete" or "continuous"
+            mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
         Returns:
             (pandas.DataFrame) dataframe with two columns: feature intervals and ALE values.
     """
@@ -42,10 +46,10 @@ def ale_plot(model: object,
         feature_max = batch[:, feature_number].max()
 
         batch[:, feature_number] = feature_min
-        y_pred_min = model.predict(batch)
+        y_pred_min = get_prediction(model, batch, mode, predict_proba=True)
 
         batch[:, feature_number] = feature_max
-        y_pred_max = model.predict(batch)
+        y_pred_max = get_prediction(model, batch, mode, predict_proba=True)
 
         y_diff = y_pred_max - y_pred_min
         local_effect_value = y_diff.mean()
@@ -69,7 +73,7 @@ def ale_plot(model: object,
 
 def __get_splitted_batches_continuous(X_sorted: np.ndarray,
                                       resolution: int,
-                                      delta_split: int=None) -> list:
+                                      delta_split: int = None) -> list:
     """
         Function splits dataset into batch list for ALE plot using frequency strategy for continuous feature.
 

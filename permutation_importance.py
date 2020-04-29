@@ -6,13 +6,15 @@ import progressbar as pb
 
 from typing import Callable
 
+from model_utils import get_prediction
 
 def permutation_importance_one_feature(model: object,
                                        X: np.ndarray,
                                        y: np.ndarray,
                                        feature_number: int,
                                        error_func: Callable,
-                                       samples_numb: int=1000) -> np.ndarray:
+                                       mode: str = 'reg',
+                                       samples_numb: int = 1000) -> np.ndarray:
     """
     Function outputs permutation importance for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/feature-importance.html
@@ -23,11 +25,12 @@ def permutation_importance_one_feature(model: object,
         y: (numpy.ndarray) array of outputs matched to X matrix
         feature_number: (int) index of feature to compute permutation importance, where feature vector will be X[:, feature_number]
         error_func: (function) pointer to error function, based on which error will be computed
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
         samples_numb: (int) number of permutation trials
     Returns:
         (numpy.ndarray) vector of increased errors of samples_numb length (0 - 0%, 1=100%).
     """
-    y_pred = model.predict(X).ravel()
+    y_pred = get_prediction(model, X, mode, predict_proba=False)
     error = error_func(y.ravel(), y_pred.ravel())
 
     bar = pb.ProgressBar(maxval=samples_numb,
@@ -36,10 +39,10 @@ def permutation_importance_one_feature(model: object,
 
     scores = []
     for sample in range(samples_numb):
-        shuff_test = X.copy()
-        shuff_test[:, feature_number] = np.random.permutation(shuff_test[:, feature_number])
+        X_shuff = X.copy()
+        X_shuff[:, feature_number] = np.random.permutation(X_shuff[:, feature_number])
 
-        score = error_func(y.ravel(), model.predict(shuff_test).ravel())
+        score = error_func(y.ravel(), get_prediction(model, X_shuff, mode, predict_proba=False))
         scores.append(score)
 
         bar.update(sample+1)
@@ -57,6 +60,7 @@ def permutation_importance(model: object,
                            y: np.ndarray,
                            feature_names: list,
                            error_func: Callable,
+                           mode: str = 'reg',
                            samples_numb: int=1000) -> pd.DataFrame:
     """
     Function outputs permutation importance for all features within X matrix. Implementation based on
@@ -68,9 +72,10 @@ def permutation_importance(model: object,
         y: (numpy.ndarray) array of outputs matched to X matrix
         feature_names: (list) list of feature names
         error_func: (function) pointer to error function, based on which error will be computed
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
         samples_numb: (int) number of permutation trials
     Returns:
-        (pandas.DataFrame) dataframe with columns named as feature_names contaiining vector of increased errors of
+        (pandas.DataFrame) dataframe with columns named as feature_names containing vector of increased errors of
         samples_numb length (0 - 0%, 1=100%).
     """
 
@@ -82,6 +87,7 @@ def permutation_importance(model: object,
                                                                 y=y,
                                                                 feature_number=feature_number,
                                                                 error_func=error_func,
+                                                                mode=mode,
                                                                 samples_numb=samples_numb)
 
         importances_df[feature_names[feature_number]] = feature_importance
