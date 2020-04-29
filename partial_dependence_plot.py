@@ -8,7 +8,10 @@ def plot_pdp(model: object,
              X: np.ndarray,
              feature_number: int,
              feature_name: str,
-             feature_type: str='continuous') -> pd.DataFrame:
+             feature_type: str = 'continuous',
+             resolution: int = 100,
+             samples_number: int = -1
+             ) -> pd.DataFrame:
     """
     Function outputs Partial Dependence Plot for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/pdp.html
@@ -19,17 +22,19 @@ def plot_pdp(model: object,
         feature_number: (int) index of feature to compute PDP, where feature vector will be X[:, feature_number]
         feature_name: (str) name of feature
         feature_type: (str) type of feature - either "discrete" or "continuous"
+        resolution: (int) resolution of ICE plot, default 100
+        samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
     Returns:
         (pandas.DataFrame) dataframe with one column of PDP values.
     """
 
-    if X.shape[0] > 1000:
-        sample_indexes = np.random.randint(X.shape[0], size=1000)
+    if samples_number > 0:
+        sample_indexes = np.random.randint(X.shape[0], size=samples_number)
         X = X[sample_indexes, :]
 
     sampled_values = __sample_space(x=X[:, feature_number],
                                     feature_type=feature_type,
-                                    sample_resolution=100)
+                                    sample_resolution=resolution)
     sample_resolution = sampled_values.shape[0]
 
     stacked_instances = np.empty((0, X.shape[1]), float)
@@ -60,7 +65,9 @@ def plot_pdp_2d(model: object,
                 X: np.ndarray,
                 feature_numbers: list,
                 feature_names: list,
-                feature_types: list='continuous') -> pd.DataFrame:
+                feature_types: list = 'continuous',
+                resolution: int = 100,
+                samples_number: int = -1) -> pd.DataFrame:
     """
     Function outputs Partial Dependence Plot for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/pdp.html
@@ -71,17 +78,19 @@ def plot_pdp_2d(model: object,
         feature_numbers: (list) list of feature indexes to compute PDP for, where feature vector will be X[:, feature_numbers]
         feature_names: (list) list of feature names
         feature_types: (str) list of feature types - either "discrete" or "continuous"
+        resolution: (int) resolution of ICE plot, default 100
+        samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
     Returns:
         (pandas.DataFrame) dataframe with indexes as first feature, columns as second feature and mean PDP values.
     """
 
-    if X.shape[0] > 1000:
-        sample_indexes = np.random.randint(X.shape[0], size=1000)
+    if samples_number > 0:
+        sample_indexes = np.random.randint(X.shape[0], size=samples_number)
         X = X[sample_indexes, :]
 
     sampled_space = __sample_2d_space(X[:, feature_numbers],
                                       feature_types,
-                                      sample_resolution=100)
+                                      sample_resolution=resolution)
     sample_resolution = sampled_space.shape[0]
 
     stacked_instances = np.empty((0, X.shape[1]), float)
@@ -115,7 +124,9 @@ def plot_ice(model: object,
              X: np.ndarray,
              feature_number: int,
              feature_name: str,
-             feature_type: str='continuous') -> pd.DataFrame:
+             feature_type: str = 'continuous',
+             resolution: int = 100,
+             samples_number: int = -1) -> pd.DataFrame:
     """
     Function outputs Individual Conditional Expectation for given feature number. Implementation based on
     https://christophm.github.io/interpretable-ml-book/ice.html
@@ -126,17 +137,19 @@ def plot_ice(model: object,
         feature_number: (int) index of feature to compute ICE, where feature vector will be X[:, feature_number]
         feature_name: (str) name of feature
         feature_type: (str) type of feature - either "discrete" or "continuous"
+        resolution: (int) resolution of ICE plot, default 100
+        samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
     Returns:
         (pandas.DataFrame) dataframe with ICE values.
     """
 
-    if X.shape[0] > 1000:
-        sample_indexes = np.random.randint(X.shape[0], size=1000)
+    if samples_number > 0:
+        sample_indexes = np.random.randint(X.shape[0], size=samples_number)
         X = X[sample_indexes, :]
 
     sampled_values = __sample_space(x=X[:, feature_number],
                                     feature_type=feature_type,
-                                    sample_resolution=100)
+                                    sample_resolution=resolution)
     sample_resolution = sampled_values.shape[0]
 
     stacked_instances = np.empty((0, X.shape[1]), float)
@@ -166,10 +179,8 @@ def plot_ice(model: object,
 
     samples_groups_df = pd.DataFrame(
         {feature_name: feature_results[feature_results['sample_id'] == 0][feature_name].values})
-    samples_groups_df.index = samples_groups_df[feature_name]
-    samples_groups_df.drop(feature_name,
-                           axis=1,
-                           inplace=True)
+    samples_groups_df.set_index(feature_name, drop=True, inplace=True)
+
     for slice_num in range(X.shape[0]):
         samples_groups_df[str(slice_num)] = feature_results[feature_results['sample_id'] == slice_num]['output'].values
 
@@ -178,7 +189,7 @@ def plot_ice(model: object,
 
 def __sample_space(x: np.ndarray,
                    feature_type: str,
-                   sample_resolution: int=100) -> np.ndarray:
+                   sample_resolution: int = 100) -> np.ndarray:
     """
     Function samples space according to feature_type.
 
