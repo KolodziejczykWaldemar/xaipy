@@ -15,7 +15,6 @@ def get_prediction(model: object,
 
     Returns:
          (numpy.ndarray) prediction values
-
     """
     if mode == 'reg':
         return model.predict(X).ravel()

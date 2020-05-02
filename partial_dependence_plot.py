@@ -1,5 +1,7 @@
 import itertools
 
+from typing import Tuple, Union
+
 import numpy as np
 import pandas as pd
 
@@ -40,25 +42,26 @@ def plot_pdp(model: object,
                                     sample_resolution=resolution)
     sample_resolution = sampled_values.shape[0]
 
-    stacked_instances = np.empty((0, X.shape[1]), float)
-    other_features = np.delete(X,
-                               feature_number,
-                               axis=1)
-    for i, row in enumerate(other_features):
-        copied_instances = np.repeat(row.reshape(1, -1),
-                                     sample_resolution,
-                                     axis=0)
-        concatenated_instances = np.insert(copied_instances,
-                                           feature_number,
-                                           sampled_values.ravel(),
-                                           axis=1)
-        stacked_instances = np.append(stacked_instances,
-                                      concatenated_instances,
-                                      axis=0)
+    stacked_feature_space = np.empty(0, float)  # TODO don't append, just repeat
+    stacked_predictions = np.empty(0, float)
 
-    y_pred = get_prediction(model, stacked_instances, mode, predict_proba=True)
-    feature_results = pd.DataFrame({feature_name: stacked_instances[:, feature_number],
-                                    'output': y_pred})
+    for i, row in enumerate(X):
+        sample_space, y_pred = ice_one_sample(model,
+                                              row.reshape(1, -1),
+                                              feature_number,
+                                              sampled_values.ravel(),
+                                              sample_resolution,
+                                              mode)
+
+        stacked_predictions = np.append(stacked_predictions,
+                                        y_pred.ravel(),
+                                        axis=0)
+        stacked_feature_space = np.append(stacked_feature_space,
+                                          sample_space.ravel(),
+                                          axis=0)
+
+    feature_results = pd.DataFrame({feature_name: stacked_feature_space,
+                                    'output': stacked_predictions})
     mean_outputs = feature_results.groupby([feature_name]).mean()
 
     return mean_outputs
@@ -147,7 +150,7 @@ def plot_ice(model: object,
         samples_number: (int) number of samples to draw (without replacement) from dataset, default set to -1 (take all)
         mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
     Returns:
-        (pandas.DataFrame) dataframe with ICE values.
+        (pandas.DataFrame) ICE values.
     """
 
     if samples_number > 0:
@@ -159,30 +162,31 @@ def plot_ice(model: object,
                                     sample_resolution=resolution)
     sample_resolution = sampled_values.shape[0]
 
-    stacked_instances = np.empty((0, X.shape[1]), float)
-    other_features = np.delete(X,
-                               feature_number,
-                               axis=1)
+    stacked_feature_space = np.empty(0, float)  # TODO don't append, just repeat
+    stacked_predictions = np.empty(0, float)
+    sample_indicators = np.empty(0, float)
 
-    row_indicator = []
-    for i, row in enumerate(other_features):
-        copied_instances = np.repeat(row.reshape(1, -1),
-                                     sample_resolution,
-                                     axis=0)
-        concatenated_instances = np.insert(copied_instances,
-                                           feature_number,
-                                           sampled_values.ravel(),
-                                           axis=1)
-        stacked_instances = np.append(stacked_instances,
-                                      concatenated_instances,
+    for i, row in enumerate(X):
+        sample_space, y_pred = ice_one_sample(model,
+                                              row.reshape(1, -1),
+                                              feature_number,
+                                              sampled_values.ravel(),
+                                              sample_resolution,
+                                              mode)
+
+        stacked_predictions = np.append(stacked_predictions,
+                                        y_pred.ravel(),
+                                        axis=0)
+        stacked_feature_space = np.append(stacked_feature_space,
+                                          sample_space.ravel(),
+                                          axis=0)
+        sample_indicators = np.append(sample_indicators,
+                                      (np.ones(sample_resolution) * i).ravel(),
                                       axis=0)
 
-        row_indicator += ((np.ones(sample_resolution) * i).ravel().tolist())
-
-    y_pred = get_prediction(model, stacked_instances, mode, predict_proba=True)
-    feature_results = pd.DataFrame({feature_name: stacked_instances[:, feature_number],
-                                    'output': y_pred,
-                                    'sample_id': row_indicator})
+    feature_results = pd.DataFrame({feature_name: stacked_feature_space,
+                                    'output': stacked_predictions,
+                                    'sample_id': sample_indicators})
 
     samples_groups_df = pd.DataFrame(
         {feature_name: feature_results[feature_results['sample_id'] == 0][feature_name].values})
@@ -192,6 +196,49 @@ def plot_ice(model: object,
         samples_groups_df[str(slice_num)] = feature_results[feature_results['sample_id'] == slice_num]['output'].values
 
     return samples_groups_df
+
+
+def ice_one_sample(model: object,
+                   x_explain: np.ndarray,
+                   feature_number: int,
+                   sampling_space: Union[Tuple[int, int], np.ndarray],
+                   resolution: int = 100,
+                   mode: str = 'reg') -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Function outputs Individual Conditional Expectation for given feature number for one sample. Implementation based on
+    https://christophm.github.io/interpretable-ml-book/ice.html
+
+    Args:
+        model: (object) fitted model with standard predict(X) public method
+        x_explain: (numpy.ndarray) one sample of shape (1, features_number) that will be explained
+        feature_number: (int) index of feature to compute ICE, where feature vector will be X[:, feature_number]
+        sampling_space: (tuple of 2 int or numpy.ndarray) range of values or array of space for which ICE will be
+                        computed
+        resolution: (int) resolution of ICE plot, default 100, useful only when sampling_space is given in tuple
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
+    Returns:
+        (tuple) tuple (sample_space, predictions) for computed ICE.
+    """
+    if type(sampling_space) == tuple:
+        sample_space = np.linspace(start=sampling_space[0], stop=sampling_space[1], num=resolution)
+    else:
+        sample_space = sampling_space
+
+    x = x_explain.reshape(1, -1)
+    other_features = np.delete(x,
+                               feature_number,
+                               axis=1)
+
+    copied_instances = np.repeat(other_features,
+                                 len(sample_space),
+                                 axis=0)
+
+    concatenated_instances = np.insert(copied_instances,
+                                       feature_number,
+                                       sample_space.ravel(),
+                                       axis=1)
+    y_pred = get_prediction(model, concatenated_instances, mode, predict_proba=True)
+    return sample_space, y_pred.ravel()
 
 
 def __sample_space(x: np.ndarray,

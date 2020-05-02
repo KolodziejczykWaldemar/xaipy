@@ -20,19 +20,19 @@ def get_shapley_values(model: object,
                        mode: str,
                        n_jobs: int = -1) -> Explanation:
     """
-        Function outputs Shapley values for given sample that needs to be explained. This method has exponential
-        computation complexity in terms of features in dataset. Therefore should not be used with datasets containing
-        many variables.
-        Implementation based on https://christophm.github.io/interpretable-ml-book/shapley.html
+    Function outputs Shapley values for given sample that needs to be explained. This method has exponential
+    computation complexity in terms of features in dataset. Therefore should not be used with datasets containing
+    many variables.
+    Implementation based on https://christophm.github.io/interpretable-ml-book/shapley.html
 
-        Args:
-            model: (object) fitted model with standard predict(X) public method
-            X: (numpy.ndarray) multidimensional array of input to the given model
-            x_explain: (numpy.ndarray) one sample of shape (1, features_number) that will be explained
-            mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
-            n_jobs: (int) The number of jobs to run in parallel, by default set to -1, i.e. using all processors.
-        Returns:
-            (Explanation) named tuple with fields average_prediction, actual_prediction and shapley_values.
+    Args:
+        model: (object) fitted model with standard predict(X) public method
+        X: (numpy.ndarray) multidimensional array of input to the given model
+        x_explain: (numpy.ndarray) one sample of shape (1, features_number) that will be explained
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
+        n_jobs: (int) The number of jobs to run in parallel, by default set to -1, i.e. using all processors.
+    Returns:
+        (Explanation) named tuple with fields average_prediction, actual_prediction and shapley_values.
     """
 
     available_cores = mlp.cpu_count()
@@ -56,19 +56,19 @@ def get_shapley_one_feature(model: object,
                             mode: str,
                             feature_number: int) -> float:
     """
-        Function outputs Shapley value for chosen feature for given sample that needs to be explained. This method has
-        exponential computation complexity in terms of features in dataset. Therefore should not be used with datasets
-        containing many variables.
-        Implementation based on https://christophm.github.io/interpretable-ml-book/shapley.html
+    Function outputs Shapley value for chosen feature for given sample that needs to be explained. This method has
+    exponential computation complexity in terms of features in dataset. Therefore should not be used with datasets
+    containing many variables.
+    Implementation based on https://christophm.github.io/interpretable-ml-book/shapley.html
 
-        Args:
-            model: (object) fitted model with standard predict(X) public method
-            X: (numpy.ndarray) multidimensional array of input to the given model
-            x_explain: (numpy.ndarray) one sample of shape (1, features_number) that will be explained
-            mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
-            feature_number: (int) index of feature that Shapley value with be calculated for
-        Returns:
-            (float) Shapley value for chosen feature
+    Args:
+        model: (object) fitted model with standard predict(X) public method
+        X: (numpy.ndarray) multidimensional array of input to the given model
+        x_explain: (numpy.ndarray) one sample of shape (1, features_number) that will be explained
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
+        feature_number: (int) index of feature that Shapley value with be calculated for
+    Returns:
+        (float) Shapley value for chosen feature
     """
     features_amount = X.shape[1]
     features = set(range(features_amount))
@@ -93,17 +93,17 @@ def __get_average_prediction(model: object,
                              coalition_columns: List[tuple],
                              mode: str) -> float:
     """
-        Private function outputs average prediction of model based on dataset with modified feature values according to
-        given coalitions of variables.
+    Private function outputs average prediction of model based on dataset with modified feature values according to
+    given coalitions of variables.
 
-        Args:
-            model: (object) fitted model with standard predict(X) public method
-            X: (numpy.ndarray) multidimensional array of input to the given model
-            coalition_columns: (list) list of tuples (feature_number, feature_value) for estimating model's average
-                                prediction
-            mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
-        Returns:average_prediction
-            (float) average prediction value
+    Args:
+        model: (object) fitted model with standard predict(X) public method
+        X: (numpy.ndarray) multidimensional array of input to the given model
+        coalition_columns: (list) list of tuples (feature_number, feature_value) for estimating model's average
+                            prediction
+        mode: (str) if classification - "clf", if regression - "reg" - by default set to "reg"
+    Returns:average_prediction
+        (float) average prediction value
     """
     X_coal = X.copy()
     for column, value in coalition_columns:

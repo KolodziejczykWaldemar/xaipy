@@ -8,6 +8,7 @@ from typing import Callable
 
 from model_utils import get_prediction
 
+
 def permutation_importance_one_feature(model: object,
                                        X: np.ndarray,
                                        y: np.ndarray,

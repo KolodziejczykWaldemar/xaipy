@@ -75,15 +75,15 @@ def __get_splitted_batches_continuous(X_sorted: np.ndarray,
                                       resolution: int,
                                       delta_split: int = None) -> list:
     """
-        Function splits dataset into batch list for ALE plot using frequency strategy for continuous feature.
+    Function splits dataset into batch list for ALE plot using frequency strategy for continuous feature.
 
-        Args:
-            X_sorted: (numpy.ndarray) multidimensional array of input to the given model sorted by feature of interest
-            resolution: (int) default 100, number of splits within given feature
-            delta_split: (int) default None, number of examples in one interval, if given, resolution is computed based
-                        on delta_split
-        Returns:
-            (list)  list of splitted batches.
+    Args:
+        X_sorted: (numpy.ndarray) multidimensional array of input to the given model sorted by feature of interest
+        resolution: (int) default 100, number of splits within given feature
+        delta_split: (int) default None, number of examples in one interval, if given, resolution is computed based
+                    on delta_split
+    Returns:
+        (list)  list of splitted batches.
     """
     if delta_split:
         resolution = int(X_sorted.shape[0] / delta_split)
