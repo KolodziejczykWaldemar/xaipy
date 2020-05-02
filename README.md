@@ -10,6 +10,7 @@ Methods covered in this library:
 * ICE Plot - Individual Conditional Expectation Plot
 * ALE Plot - Accumulated Local Effects Plot (only 1D support)
 * Permutation Importance
+* Shapley values (exact, not optimized implementation)
 
 All methods are built assuming *scikit-learn*-like interface of models:
 ```python

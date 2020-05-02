@@ -112,26 +112,3 @@ def __get_average_prediction(model: object,
     y_pred = get_prediction(model, X_coal, mode, predict_proba=True)
 
     return y_pred.mean(axis=0)
-
-
-if __name__ == "__main__":
-    import time
-    import pandas as pd
-    from sklearn.datasets import load_boston
-    from sklearn.ensemble import RandomForestRegressor
-
-    dataset = pd.DataFrame(data=load_boston()['data'], columns=load_boston()['feature_names'])
-    X = dataset.values5
-    y = load_boston()['target']
-
-    model = RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_leaf=10)
-    model.fit(X, y)
-
-    start = time.time()
-    shap = get_shapley_values(model, X, x_explain=X[41:42, :], mode='reg', n_jobs=1)
-    print(shap, time.time() - start)
-    # part_shap = partial(func, 44)
-    # pool = mlp.Pool(5)
-    # imp = [1, 2, 3, 4, 5]
-    # total_successes = pool.map(part_shap, imp)
-    # print(total_successes)
